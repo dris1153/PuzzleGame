@@ -7,12 +7,18 @@
     moves: number
     placed: number
     total: number
+    hintsLeft: number
+    canHint: boolean
+    ghost: boolean
     canPause: boolean
+    onHint: () => void
+    onToggleGhost: () => void
     onPause: () => void
     onMenu: () => void
   }
 
-  let { elapsedMs, moves, placed, total, canPause, onPause, onMenu }: Props = $props()
+  let { elapsedMs, moves, placed, total, hintsLeft, canHint, ghost, canPause, onHint, onToggleGhost, onPause, onMenu }: Props =
+    $props()
 </script>
 
 <header class="hud">
@@ -22,7 +28,11 @@
     <div><dt>{t('hud.moves')}</dt><dd>{moves}</dd></div>
     <div><dt>{t('hud.pieces')}</dt><dd>{placed}/{total}</dd></div>
   </dl>
-  <button type="button" onclick={onPause} disabled={!canPause}>{t('hud.pause')}</button>
+  <div class="actions">
+    <button type="button" onclick={onHint} disabled={!canHint || hintsLeft <= 0}>{t('hud.hint', { count: hintsLeft })}</button>
+    <button type="button" aria-pressed={ghost} onclick={onToggleGhost}>{t('hud.ghost')}</button>
+    <button type="button" onclick={onPause} disabled={!canPause}>{t('hud.pause')}</button>
+  </div>
 </header>
 
 <style>
@@ -34,9 +44,14 @@
     padding: 0.5rem 1rem;
   }
 
-  .metrics {
+  .metrics,
+  .actions {
     display: flex;
     gap: 1.5rem;
+  }
+
+  .actions {
+    gap: 0.5rem;
   }
 
   dt {

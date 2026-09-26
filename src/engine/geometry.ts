@@ -32,6 +32,11 @@ export function toLocal(point: Point, center: Point, rotation: Rotation): Point 
   }
 }
 
+/** Only an upright piece close to its spot snaps. */
+export function canSnap(piece: Piece, layout: BoardLayout, grid: Grid): boolean {
+  return piece.rotation === 0 && isNearTarget(piece, layout, grid)
+}
+
 export function isNearTarget(piece: Piece, layout: BoardLayout, grid: Grid): boolean {
   const target = boardToWorld(correctCenter(piece, grid), layout)
   return distance(boardToWorld(piece, layout), target) < layout.pieceW / 3

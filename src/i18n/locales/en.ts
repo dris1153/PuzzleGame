@@ -17,6 +17,8 @@ export const en = {
   'hud.pieces': 'Pieces',
   'hud.pause': 'Pause',
   'hud.menu': 'Menu',
+  'hud.hint': 'Hint ({count})',
+  'hud.ghost': 'Ghost image',
 
   'pause.title': 'Paused',
   'pause.resume': 'Resume',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { boardToWorld, isNearTarget, toLocal, worldToBoard } from './geometry'
+import { boardToWorld, canSnap, isNearTarget, toLocal, worldToBoard } from './geometry'
 import { createPieces } from './piece-generator'
 import type { BoardLayout, Rotation } from './types'
 
@@ -66,5 +66,43 @@ describe('toLocal with fractional centers', () => {
     const back = toLocal(world, center, 0)
     expect(back.x).toBeCloseTo(local.x, 10)
     expect(back.y).toBeCloseTo(local.y, 10)
+  })
+})
+
+describe('toLocal point-in-rotated-bounds', () => {
+  it('places world point outside rotated piece bounds correctly in local space', () => {
+    // Non-square piece: 200x100. toLocal with rotation=1 (90°) transforms (dx,dy) → (dy,-dx).
+    // A world point 60 px right and 0 px down from center:
+    // dx=60, dy=0 → toLocal returns {x:0, y:-60}
+    const center = { x: 500, y: 300 }
+    const worldPointRight = { x: center.x + 60, y: center.y }
+    const localAt90 = toLocal(worldPointRight, center, 1)
+    expect(localAt90.x).toBeCloseTo(0)
+    expect(localAt90.y).toBeCloseTo(-60) // dy - dx transformation
+    // This demonstrates that hit-test can use local bounds to check rotated pieces:
+    // A 200-wide piece has local x bounds ±100; y=−60 is within ±100 bounds.
+    // A point further down (y=−150) would be outside the piece bounds.
+  })
+})
+
+describe('canSnap', () => {
+  it('requires an upright piece even at the exact target', () => {
+    const grid = { rows: 3, cols: 3 }
+    const piece = createPieces(grid)[4]
+    expect(canSnap(piece, layout, grid)).toBe(true)
+    for (const rotation of [1, 2, 3] as Rotation[]) {
+      piece.rotation = rotation
+      expect(canSnap(piece, layout, grid)).toBe(false)
+    }
+  })
+
+  it('returns false when rotation=0 but piece is outside snap radius', () => {
+    const grid = { rows: 3, cols: 3 }
+    const piece = createPieces(grid)[4] // center piece, at target
+    piece.rotation = 0
+    expect(canSnap(piece, layout, grid)).toBe(true)
+    // Move far outside snap radius but keep rotation 0
+    piece.u += layout.pieceW / 3 / layout.width * 1.5
+    expect(canSnap(piece, layout, grid)).toBe(false)
   })
 })

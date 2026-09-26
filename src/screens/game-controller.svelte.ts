@@ -1,15 +1,18 @@
+import { playSfx } from '../audio/sfx-player'
 import type { GameConfig } from '../data/game-config'
 import { GameSession, type SessionResult, type SessionStatus } from '../engine/game-session'
 import { createPuzzleGame, type PuzzleGame } from '../engine/puzzle-game'
 import { computeStars, type Stars } from '../engine/scoring'
 import { progress } from '../stores/progress-store.svelte'
+import { settings } from '../stores/settings-store.svelte'
 
 export type WinInfo = SessionResult & { stars: Stars; isNewBest: boolean }
 
 /** Wires one game screen: engine input → session metrics → persisted progress and stats. */
 export class GameController {
-  hud = $state.raw({ status: 'ready' as SessionStatus, moves: 0, placed: 0, elapsedMs: 0 })
+  hud = $state.raw({ status: 'ready' as SessionStatus, moves: 0, placed: 0, elapsedMs: 0, hintsLeft: 0 })
   win = $state.raw<WinInfo | null>(null)
+  ghost = $state(settings.current.ghostDefault)
 
   private readonly config: GameConfig
   private canvas: HTMLCanvasElement | null = null
@@ -35,7 +38,7 @@ export class GameController {
 
   sync = (): void => {
     const s = this.session
-    this.hud = { status: s.status, moves: s.moves, placed: s.placed, elapsedMs: s.elapsedMs() }
+    this.hud = { status: s.status, moves: s.moves, placed: s.placed, elapsedMs: s.elapsedMs(), hintsLeft: s.hintsLeft }
   }
 
   restart = (): void => {
@@ -50,22 +53,47 @@ export class GameController {
       image: this.image,
       rows: this.config.rows,
       cols: this.config.cols,
+      rotation: this.config.rotation,
+      ghost: this.ghost,
       onPickup: () => {
-        if (this.session.status !== 'ready') return
-        this.session.start()
-        progress.recordGameStart()
-        this.sync()
+        playSfx('pickup')
+        this.beginIfReady()
       },
-      onMove: () => {
+      onMove: (snapped) => {
+        if (!snapped) playSfx('drop')
         this.session.recordMove()
         this.sync()
       },
+      onRotate: () => playSfx('rotate'),
       onPiecePlaced: () => {
+        playSfx('snap')
         this.session.recordPlaced()
         this.sync()
       },
       onComplete: () => this.finish(),
     })
+    this.sync()
+  }
+
+  /** Hints are allowed before the first pickup, so asking for one starts the clock too. */
+  hint = (): void => {
+    if (!this.game) return
+    this.beginIfReady()
+    if (this.session.status !== 'playing' || this.session.hintsLeft <= 0 || !this.game?.showHint()) return
+    this.session.recordHint()
+    playSfx('hint')
+    this.sync()
+  }
+
+  toggleGhost = (): void => {
+    this.ghost = !this.ghost
+    this.game?.setGhostVisible(this.ghost)
+  }
+
+  private beginIfReady(): void {
+    if (this.session.status !== 'ready') return
+    this.session.start()
+    progress.recordGameStart()
     this.sync()
   }
 
@@ -110,6 +138,7 @@ export class GameController {
     const stars = computeStars({ ...result, parSec: this.config.parSec })
     const isNewBest = progress.recordWin(this.config, result, stars)
     this.flushStats()
+    playSfx('win')
     this.win = { ...result, stars, isNewBest }
     this.sync()
   }

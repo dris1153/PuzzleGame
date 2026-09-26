@@ -19,6 +19,8 @@ export const vi = {
   'hud.pieces': 'Mảnh',
   'hud.pause': 'Tạm dừng',
   'hud.menu': 'Menu',
+  'hud.hint': 'Gợi ý ({count})',
+  'hud.ghost': 'Ảnh mờ',
 
   'pause.title': 'Đang tạm dừng',
   'pause.resume': 'Tiếp tục',

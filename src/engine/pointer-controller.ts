@@ -1,4 +1,5 @@
 import { distance } from './geometry'
+import { classifyRelease } from './pointer-gesture'
 import type { BoardPoint, Piece, Point } from './types'
 
 export interface DragHandlers {
@@ -8,6 +9,8 @@ export interface DragHandlers {
   grab(piece: Piece): void
   move(piece: Piece, to: BoardPoint): void
   drop(piece: Piece, movedPx: number): void
+  /** A quick press and release without dragging. */
+  tap(piece: Piece): void
 }
 
 interface DragState {
@@ -17,6 +20,7 @@ interface DragState {
   /** Latest known position; `pointercancel` carries no reliable coordinates. */
   last: Point
   offset: BoardPoint
+  startTime: number
 }
 
 export interface PointerController {
@@ -42,7 +46,14 @@ export function attachPointerController(canvas: HTMLCanvasElement, h: DragHandle
     e.preventDefault()
     canvas.setPointerCapture(e.pointerId)
     const b = h.toBoard(point)
-    drag = { pointerId: e.pointerId, piece, start: point, last: point, offset: { u: piece.u - b.u, v: piece.v - b.v } }
+    drag = {
+      pointerId: e.pointerId,
+      piece,
+      start: point,
+      last: point,
+      offset: { u: piece.u - b.u, v: piece.v - b.v },
+      startTime: e.timeStamp,
+    }
     h.grab(piece)
   }
 
@@ -56,9 +67,11 @@ export function attachPointerController(canvas: HTMLCanvasElement, h: DragHandle
   // Also handles pointercancel and lost capture, so a drag can never get stuck.
   const onEnd = (e: PointerEvent) => {
     if (!drag || e.pointerId !== drag.pointerId) return
-    const { piece, start, last } = drag
+    const { piece, start, last, startTime } = drag
     drag = null
-    h.drop(piece, distance(start, last))
+    const moved = distance(start, last)
+    if (e.type === 'pointerup' && classifyRelease(moved, e.timeStamp - startTime) === 'tap') h.tap(piece)
+    else h.drop(piece, moved)
   }
 
   const onContextMenu = (e: Event) => e.preventDefault()

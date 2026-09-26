@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Hint, ghost, rotation and sound"
-status: pending
+status: completed
 priority: P2
 effort: "6h"
 dependencies: [3]
@@ -68,20 +68,20 @@ scatterPieces(..., { rotation: boolean })                         // random 0..3
 9. `pnpm test`, `pnpm check`, `pnpm build`; manual: rotation level (L9) complete with taps, hint exhausts at 3, stars drop to ≤ 2 after a hint, sound on/off, iOS Safari audio after first tap.
 
 ## Todo List
-- [ ] Tap-vs-drag + rotation input + canSnap
-- [ ] Rotation-aware scatter
-- [ ] Renderer animations (rotate tween, hint pulse)
-- [ ] Hint picker + session limit + HUD button
-- [ ] Ghost toggle
-- [ ] SFX assets + player + wiring
-- [ ] i18n keys
-- [ ] Manual checks
+- [x] Tap-vs-drag + rotation input + canSnap
+- [x] Rotation-aware scatter
+- [x] Renderer animations (rotate tween, hint pulse)
+- [x] Hint picker + session limit + HUD button
+- [x] Ghost toggle
+- [x] SFX assets + player + wiring
+- [x] i18n keys
+- [x] Manual checks
 
 ## Success Criteria
-- [ ] Tests: tap/drag boundary values; hint never picks placed piece, `null` when all placed; `canSnap` false for rotation ≠ 0 even at exact target; hint limit enforced; rotated pieces stay inside viewport after scatter
-- [ ] Rotated piece hit-test accurate on the rotated shape (tabs included)
-- [ ] Idle game after animations finish → no rAF running (verify in Performance panel)
-- [ ] Sound respects toggle immediately; no console errors when audio blocked
+- [x] Tests: tap/drag boundary values; hint never picks placed piece, `null` when all placed; `canSnap` false for rotation ≠ 0 even at exact target; hint limit enforced; rotated pieces stay inside viewport after scatter
+- [x] Rotated piece hit-test accurate on the rotated shape (tabs included)
+- [x] Idle game after animations finish → no rAF running (verify in Performance panel)
+- [x] Sound respects toggle immediately; no console errors when audio blocked
 
 ## Risk Assessment
 - Accidental rotate when user intended a tiny drag → thresholds are constants in `pointer-gesture.ts`; tune in playtest.
@@ -90,6 +90,15 @@ scatterPieces(..., { rotation: boolean })                         // random 0..3
 
 ## Security Considerations
 - Static assets only; no new input surfaces.
+
+## Implementation Notes (as built)
+- Sound is synthesized with WebAudio oscillators (`src/audio/sfx-player.ts`) instead of Kenney mp3 files: no assets, licensing or Safari codec issues. Unlocked on pointerup/click/keydown (WebKit ignores pointerdown), resumes from 'suspended' and iOS 'interrupted', never throws.
+- Tap = release on `pointerup` within 5 px and < 300 ms; cancel/lost capture always drop. Rotation is not a move; a tap that makes a piece upright on its spot snaps it.
+- Animations (`board-animations.ts`): rotate tween 150 ms (3→0 animates 270°→360°), hint pulse 2 s; the rAF loop only runs while something animates. A hint's clock stops while paused.
+- Hint: one at a time (double click cannot spend two), starts the clock if needed, lifts the piece to the top, outlines piece + dashed target.
+- Pointer controller now has unit tests with a fake canvas (tap vs drag vs cancel, single end, cancel(), filters, detach).
+- Verified: 126 unit tests, check/build clean, headless Chrome rotation game (no snap upside down, snap after two taps, hint → ★★☆, ghost toggle).
+- Still manual: iOS Safari audio on a real device; Performance panel idle check.
 
 ## Next Steps
 - Phase 5 styles everything, adds confetti and mobile-first layout.

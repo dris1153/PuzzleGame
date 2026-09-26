@@ -61,7 +61,12 @@
     moves={controller.hud.moves}
     placed={controller.hud.placed}
     total={controller.total}
+    hintsLeft={controller.hud.hintsLeft}
+    canHint={status === 'ready' || status === 'playing'}
+    ghost={controller.ghost}
     canPause={status === 'playing'}
+    onHint={controller.hint}
+    onToggleGhost={controller.toggleGhost}
     onPause={controller.pause}
     onMenu={status === 'playing' ? controller.pause : onExit}
   />
