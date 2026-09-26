@@ -1,0 +1,72 @@
+import { distance } from './geometry'
+import type { BoardPoint, Piece, Point } from './types'
+
+export interface DragHandlers {
+  enabled(): boolean
+  pick(point: Point): Piece | null
+  toBoard(point: Point): BoardPoint
+  grab(piece: Piece): void
+  move(piece: Piece, to: BoardPoint): void
+  drop(piece: Piece, movedPx: number): void
+}
+
+interface DragState {
+  pointerId: number
+  piece: Piece
+  start: Point
+  /** Latest known position; `pointercancel` carries no reliable coordinates. */
+  last: Point
+  offset: BoardPoint
+}
+
+/** Wires Pointer Events on the canvas to drag handlers. Returns a detach function. */
+export function attachPointerController(canvas: HTMLCanvasElement, h: DragHandlers): () => void {
+  let drag: DragState | null = null
+
+  const toPoint = (e: PointerEvent): Point => {
+    const rect = canvas.getBoundingClientRect()
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top }
+  }
+
+  const onDown = (e: PointerEvent) => {
+    if (drag || !e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0) || !h.enabled()) return
+    const point = toPoint(e)
+    const piece = h.pick(point)
+    if (!piece) return
+    e.preventDefault()
+    canvas.setPointerCapture(e.pointerId)
+    const b = h.toBoard(point)
+    drag = { pointerId: e.pointerId, piece, start: point, last: point, offset: { u: piece.u - b.u, v: piece.v - b.v } }
+    h.grab(piece)
+  }
+
+  const onMove = (e: PointerEvent) => {
+    if (!drag || e.pointerId !== drag.pointerId) return
+    drag.last = toPoint(e)
+    const b = h.toBoard(drag.last)
+    h.move(drag.piece, { u: b.u + drag.offset.u, v: b.v + drag.offset.v })
+  }
+
+  // Also handles pointercancel and lost capture, so a drag can never get stuck.
+  const onEnd = (e: PointerEvent) => {
+    if (!drag || e.pointerId !== drag.pointerId) return
+    const { piece, start, last } = drag
+    drag = null
+    h.drop(piece, distance(start, last))
+  }
+
+  const onContextMenu = (e: Event) => e.preventDefault()
+
+  const events = [
+    ['pointerdown', onDown],
+    ['pointermove', onMove],
+    ['pointerup', onEnd],
+    ['pointercancel', onEnd],
+    ['lostpointercapture', onEnd],
+    ['contextmenu', onContextMenu],
+  ] as const
+  for (const [type, fn] of events) canvas.addEventListener(type, fn as EventListener)
+  return () => {
+    for (const [type, fn] of events) canvas.removeEventListener(type, fn as EventListener)
+  }
+}
