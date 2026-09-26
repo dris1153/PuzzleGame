@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Screens, i18n and level content"
-status: pending
+status: completed
 priority: P2
 effort: "7h"
 dependencies: [2]
@@ -96,22 +96,22 @@ Pure helpers (tested):
 11. `pnpm test`, `pnpm check`, `pnpm build`; manual: full campaign flow levels 1→2, lock state, reload persistence, VI/EN switch on every screen, upload a large phone photo.
 
 ## Todo List
-- [ ] i18n core + locales + convert existing strings
-- [ ] Settings + screen stores, App screen switch
-- [ ] 15 level images + thumbs + credits
-- [ ] Level data, unlock, grid limits (tested)
-- [ ] Home, Level Select, Free Play setup, Stats, Settings screens
-- [ ] Upload pipeline with validation/downscale
-- [ ] Win/pause navigation
-- [ ] Manual flow check EN + VI
+- [x] i18n core + locales + convert existing strings
+- [x] Settings + screen stores, App screen switch
+- [x] 15 level images + thumbs + credits
+- [x] Level data, unlock, grid limits (tested)
+- [x] Home, Level Select, Free Play setup, Stats, Settings screens
+- [x] Upload pipeline with validation/downscale
+- [x] Win/pause navigation
+- [x] Manual flow check EN + VI
 
 ## Success Criteria
-- [ ] `pnpm check` fails if any VI key is missing (verified by temporarily deleting one)
-- [ ] No hardcoded user-facing string outside `locales/`
-- [ ] Level N+1 locked until N completed; state survives reload
-- [ ] 12 MP phone photo upload plays smoothly (downscaled); non-image file shows error
-- [ ] Level Select transfers thumbs only (check Network tab)
-- [ ] Total level assets ≤ ~4 MB
+- [x] `pnpm check` fails if any VI key is missing (verified by temporarily deleting one)
+- [x] No hardcoded user-facing string outside `locales/`
+- [x] Level N+1 locked until N completed; state survives reload
+- [x] 12 MP phone photo upload plays smoothly (downscaled); non-image file shows error
+- [x] Level Select transfers thumbs only (check Network tab)
+- [x] Total level assets ≤ ~4 MB
 
 ## Risk Assessment
 - 8x8 campaign on 360 px wide phone → ~40 px pieces; acceptable but tight. If playtest is bad, cap campaign grids with `maxGridFor` too.
@@ -121,6 +121,17 @@ Pure helpers (tested):
 ## Security Considerations
 - Upload: check MIME + size before decoding; decode via `createImageBitmap` (no HTML injection path); object URLs revoked after use; nothing uploaded leaves the device.
 - Render all text via Svelte bindings (escaped); no `{@html}`.
+
+## Implementation Notes (as built)
+- Images: 15 Unsplash photos fetched via picsum.photos as 1500×1000 WebP + 360×240 thumbs (3.0 MB total); legacy `img.jpg` removed (unknown license). Credits verified against the picsum catalog.
+- Unlock logic lives in `levels.ts` (`isLevelUnlocked`); interpolate tests live in `locales.test.ts`.
+- `createPersistedState` (`lib/persisted-state.svelte.ts`) backs both progress and settings: re-read before write + `storage` event sync.
+- Game wiring moved to `screens/game-controller.svelte.ts`; the screen remounts via `{#key}` per navigation.
+- HUD Menu pauses a running game instead of quitting (Quit lives in the pause overlay).
+- Free Play: rotation follows the Settings default until toggled; wanted rows/cols are kept and clamped per screen; upload decode is race-guarded and Start is disabled while decoding; uploads are re-encoded to JPEG on white with EXIF orientation applied; one object URL kept at a time.
+- A11y: screen titles take focus on navigation; confirm dialog is named and returns focus; decorative glyphs hidden.
+- Known gap for phase 5: on a 360 px portrait phone campaign pieces get small (8×8 ≈ 36×24 px) because the 3:2 board is width-bound.
+- Verified: 102 unit tests, check/build clean, headless Chrome flow (campaign unlock + next level, upload errors/large photo, stats, EN→VI persisted).
 
 ## Next Steps
 - Phase 4 adds hint, ghost toggle, rotation and sound on top of the game screen.

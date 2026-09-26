@@ -21,6 +21,7 @@ Playful/cartoon visual identity, reusable UI primitives, board and piece polish 
 - Bake the resting drop shadow into piece sprites; use live `ctx.shadowBlur` only for the single dragged piece → shadows stay cheap at 100 pieces.
 - Scatter quality decides mobile playability: portrait → board on top, pieces below; landscape → pieces left/right of board.
 - `prefers-reduced-motion` must disable confetti and shorten/skip tweens.
+- Measured after phase 3: 360×680 portrait gives a 288×192 board (8×8 → 36×24 px pieces). Portrait needs a larger board scale (≈0.95 width) with the scatter zone below; the HUD must compact/wrap for Vietnamese labels at 320–360 px.
 
 ## Requirements
 - Functional:

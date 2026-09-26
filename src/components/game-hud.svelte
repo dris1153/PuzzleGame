@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from '../i18n/i18n.svelte'
   import { formatTime } from '../lib/format-time'
 
   interface Props {
@@ -8,18 +9,20 @@
     total: number
     canPause: boolean
     onPause: () => void
+    onMenu: () => void
   }
 
-  let { elapsedMs, moves, placed, total, canPause, onPause }: Props = $props()
+  let { elapsedMs, moves, placed, total, canPause, onPause, onMenu }: Props = $props()
 </script>
 
 <header class="hud">
+  <button type="button" onclick={onMenu}>{t('hud.menu')}</button>
   <dl class="metrics">
-    <div><dt>Time</dt><dd>{formatTime(elapsedMs)}</dd></div>
-    <div><dt>Moves</dt><dd>{moves}</dd></div>
-    <div><dt>Pieces</dt><dd>{placed}/{total}</dd></div>
+    <div><dt>{t('hud.time')}</dt><dd>{formatTime(elapsedMs)}</dd></div>
+    <div><dt>{t('hud.moves')}</dt><dd>{moves}</dd></div>
+    <div><dt>{t('hud.pieces')}</dt><dd>{placed}/{total}</dd></div>
   </dl>
-  <button type="button" onclick={onPause} disabled={!canPause}>Pause</button>
+  <button type="button" onclick={onPause} disabled={!canPause}>{t('hud.pause')}</button>
 </header>
 
 <style>

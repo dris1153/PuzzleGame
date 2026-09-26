@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import type { Stars } from '../engine/scoring'
+  import { t } from '../i18n/i18n.svelte'
   import { formatTime } from '../lib/format-time'
 
   interface Props {
@@ -9,23 +10,34 @@
     stars: Stars
     isNewBest: boolean
     onReplay: () => void
+    onMenu: () => void
+    /** Omitted when there is no next level. */
+    onNext?: () => void
   }
 
-  let { timeMs, moves, stars, isNewBest, onReplay }: Props = $props()
-  let replayButton: HTMLButtonElement
+  let { timeMs, moves, stars, isNewBest, onReplay, onMenu, onNext }: Props = $props()
+  let primaryButton = $state<HTMLButtonElement>()
 
-  onMount(() => replayButton.focus())
+  onMount(() => primaryButton?.focus())
 </script>
 
 <div class="backdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="win-title">
-    <h2 id="win-title">Puzzle complete!</h2>
-    <p class="stars" role="img" aria-label="{stars} of 3 stars">
+    <h2 id="win-title">{t('win.title')}</h2>
+    <p class="stars" role="img" aria-label={t('win.stars', { count: stars })}>
       {'★'.repeat(stars)}{'☆'.repeat(3 - stars)}
     </p>
-    <p>Time {formatTime(timeMs)} · Moves {moves}</p>
-    {#if isNewBest}<p class="best">New best time!</p>{/if}
-    <button type="button" bind:this={replayButton} onclick={onReplay}>Play again</button>
+    <p>{t('win.summary', { time: formatTime(timeMs), moves })}</p>
+    {#if isNewBest}<p class="best">{t('win.newBest')}</p>{/if}
+    <div class="actions">
+      {#if onNext}
+        <button type="button" bind:this={primaryButton} onclick={onNext}>{t('win.next')}</button>
+        <button type="button" onclick={onReplay}>{t('win.replay')}</button>
+      {:else}
+        <button type="button" bind:this={primaryButton} onclick={onReplay}>{t('win.replay')}</button>
+      {/if}
+      <button type="button" onclick={onMenu}>{t('win.menu')}</button>
+    </div>
   </div>
 </div>
 
@@ -54,5 +66,12 @@
 
   .best {
     font-weight: 700;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
   }
 </style>

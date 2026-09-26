@@ -1,20 +1,44 @@
 <script lang="ts">
-  import { defaultParSec, type GameConfig } from './data/game-config'
+  import { levelConfig, nextLevel } from './data/levels'
+  import FreePlaySetupScreen from './screens/free-play-setup-screen.svelte'
   import GameScreen from './screens/game-screen.svelte'
+  import HomeScreen from './screens/home-screen.svelte'
+  import LevelSelectScreen from './screens/level-select-screen.svelte'
+  import SettingsScreen from './screens/settings-screen.svelte'
+  import StatsScreen from './screens/stats-screen.svelte'
+  import { screen } from './stores/screen-store.svelte'
+  import { settings } from './stores/settings-store.svelte'
 
-  // Temporary until level data and screens land in phase 3.
-  const config: GameConfig = {
-    mode: 'campaign',
-    levelId: 'level-01',
-    imageSrc: `${import.meta.env.BASE_URL}levels/level-01.jpg`,
-    rows: 3,
-    cols: 3,
-    rotation: false,
-    parSec: defaultParSec(3, 3, false),
+  $effect(() => {
+    document.documentElement.lang = settings.current.locale
+  })
+
+  const current = $derived(screen.current)
+
+  function exitGame() {
+    if (current.name === 'game') screen.go({ name: current.returnTo })
+  }
+
+  function nextHandler(): (() => void) | undefined {
+    if (current.name !== 'game' || current.config.mode !== 'campaign') return undefined
+    const next = nextLevel(current.config.levelId)
+    return next && (() => screen.go({ name: 'game', config: levelConfig(next), returnTo: 'level-select' }))
   }
 </script>
 
-<!-- GameScreen reads its config once; a new config needs a fresh instance. -->
-{#key config}
-  <GameScreen {config} />
-{/key}
+{#if current.name === 'home'}
+  <HomeScreen />
+{:else if current.name === 'level-select'}
+  <LevelSelectScreen />
+{:else if current.name === 'free-play'}
+  <FreePlaySetupScreen />
+{:else if current.name === 'stats'}
+  <StatsScreen />
+{:else if current.name === 'settings'}
+  <SettingsScreen />
+{:else if current.name === 'game'}
+  <!-- GameScreen reads its config once; every navigation to a game gets a fresh instance. -->
+  {#key current}
+    <GameScreen config={current.config} onExit={exitGame} onNext={nextHandler()} />
+  {/key}
+{/if}
