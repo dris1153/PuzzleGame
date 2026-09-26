@@ -1,0 +1,42 @@
+:root {
+  /* Palette: every fill is paired with ink text (contrast ≥ 4.5:1). */
+  --ink: #2b2140;
+  --ink-soft: #62567c;
+  --cream: #fff6e5;
+  --paper: #ffffff;
+  --felt: #e3f5ec;
+  --sunny: #ffc93c;
+  --coral: #ff8a6b;
+  --mint: #6ee7b7;
+  --grape: #b69cff;
+  --sky: #7dd3fc;
+  --star: #ffb400;
+  --danger: #ff6b8a;
+  /* Focus rings need 3:1 against every background; the pastel grape does not reach it. */
+  --focus: #6b46c1;
+
+  --font-display: 'Baloo 2', 'Nunito', system-ui, sans-serif;
+  --font-body: 'Nunito', system-ui, sans-serif;
+
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
+  --radius-pill: 999px;
+
+  --border: 3px solid var(--ink);
+  --lift: 0 5px 0 var(--ink);
+  --lift-pressed: 0 2px 0 var(--ink);
+  --soft-shadow: 0 12px 32px rgb(43 33 64 / 0.16);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  --dur-fast: 120ms;
+  --dur: 220ms;
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}

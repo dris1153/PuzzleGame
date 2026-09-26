@@ -1,0 +1,110 @@
+/* Only the subsets the app needs: Latin + Vietnamese diacritics. */
+@import '@fontsource/baloo-2/latin-800.css';
+@import '@fontsource/baloo-2/latin-ext-800.css';
+@import '@fontsource/baloo-2/vietnamese-800.css';
+@import '@fontsource/nunito/latin-600.css';
+@import '@fontsource/nunito/latin-ext-600.css';
+@import '@fontsource/nunito/vietnamese-600.css';
+@import '@fontsource/nunito/latin-800.css';
+@import '@fontsource/nunito/latin-ext-800.css';
+@import '@fontsource/nunito/vietnamese-800.css';
+@import './styles/tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  overscroll-behavior: none;
+  font-family: var(--font-body);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ink);
+  background-color: var(--cream);
+  background-image: radial-gradient(rgb(43 33 64 / 0.07) 1.5px, transparent 1.5px);
+  background-size: 22px 22px;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--ink);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+@layer base {
+  button:not(:disabled),
+  [role='button']:not(:disabled),
+  label:has(> input[type='checkbox']),
+  select:not(:disabled) {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Sticker-style panel used by menu screens. */
+.panel {
+  padding: var(--space-4);
+  background: var(--paper);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--lift);
+}
+
+input[type='range'] {
+  width: 100%;
+  height: 32px;
+  accent-color: var(--coral);
+}
