@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Game session, HUD and metrics"
-status: pending
+status: completed
 priority: P1
 effort: "5h"
 dependencies: [1]
@@ -94,16 +94,16 @@ interface ProgressV1 {
 12. `pnpm test`, `pnpm check`, `pnpm build`; manual: finish a game, reload, confirm best time/stars persisted.
 
 ## Todo List
-- [ ] Game config + session + scoring (with tests)
-- [ ] Storage + progress schema/reducer/store (with tests)
-- [ ] Engine pause/resume/restart/onPickup
-- [ ] HUD, pause overlay, win modal, game screen
-- [ ] Manual persistence check
+- [x] Game config + session + scoring (with tests)
+- [x] Storage + progress schema/reducer/store (with tests)
+- [x] Engine pause/resume/restart/onPickup
+- [x] HUD, pause overlay, win modal, game screen
+- [x] Manual persistence check
 
 ## Success Criteria
-- [ ] Tests: paused time excluded from `elapsedMs`; timer starts on first pickup; transitions after `won` ignored; star thresholds at exact boundaries; best time only improves; stars only increase; bad JSON / throwing storage → defaults
-- [ ] Switching browser tab auto-pauses; board hidden while paused; no input while paused
-- [ ] Best time + stars + stats survive reload
+- [x] Tests: paused time excluded from `elapsedMs`; timer starts on first pickup; transitions after `won` ignored; star thresholds at exact boundaries; best time only improves; stars only increase; bad JSON / throwing storage → defaults
+- [x] Switching browser tab auto-pauses; board hidden while paused; no input while paused
+- [x] Best time + stars + stats survive reload
 
 ## Risk Assessment
 - Stats lost if tab killed without `pagehide` → acceptable, stats are non-critical.
@@ -111,6 +111,16 @@ interface ProgressV1 {
 
 ## Security Considerations
 - Treat localStorage as untrusted: type-guard before use, never `eval`/`innerHTML` stored values.
+
+## Implementation Notes (as built)
+- `GameSession` is a small class (injected clock, `maxHints`); engine exposes `setPaused(bool)`; restart = destroy + recreate the engine in `game-screen.svelte`.
+- `GameConfig` is a discriminated union (`campaign` requires `levelId`).
+- Progress store re-reads storage before each write and listens to `storage` events (multi-tab safe).
+- Stats flush as deltas, so repeated flushes (hide, pagehide, bfcache restore, win, restart, unmount) never double-count or drop time.
+- A drag interrupted by pause counts as a move (not snapped); `destroy()` cancels any drag.
+- Dialogs move focus to their primary button; Escape resumes; HUD interval only restarts when status changes.
+- `App.svelte` wraps `GameScreen` in `{#key config}`: the screen reads its config once.
+- Verified: 78 unit tests, check/build clean, headless Chrome run (HUD, pause, auto-pause, win 3★, persistence).
 
 ## Next Steps
 - Phase 3 replaces the hardcoded config with screens, level data and i18n.

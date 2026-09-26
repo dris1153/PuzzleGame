@@ -23,7 +23,7 @@ Source of decisions: [brainstorm report](../reports/brainstorm-260926-2355-vite-
 | Phase | Name | Status | Effort |
 |-------|------|--------|--------|
 | 1 | [Scaffold and engine port](./phase-01-scaffold-and-engine-port.md) | Completed | 6h |
-| 2 | [Game session, HUD and metrics](./phase-02-game-session-hud-and-metrics.md) | Pending | 5h |
+| 2 | [Game session, HUD and metrics](./phase-02-game-session-hud-and-metrics.md) | Completed | 5h |
 | 3 | [Screens, i18n and level content](./phase-03-screens-i18n-and-level-content.md) | Pending | 7h |
 | 4 | [Hint, ghost, rotation and sound](./phase-04-hint-ghost-rotation-and-sound.md) | Pending | 6h |
 | 5 | [Playful styling, responsive and polish](./phase-05-playful-styling-responsive-and-polish.md) | Pending | 6h |

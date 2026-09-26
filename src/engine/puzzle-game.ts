@@ -17,6 +17,7 @@ export interface PuzzleGameOptions {
   rows: number
   cols: number
   rng?: Rng
+  onPickup?(): void
   onPiecePlaced?(placed: number, total: number): void
   /** A drop after dragging more than a few pixels. */
   onMove?(): void
@@ -24,6 +25,8 @@ export interface PuzzleGameOptions {
 }
 
 export interface PuzzleGame {
+  /** Paused games ignore input; a drag in progress stays where it is (counted as a move, never snapped). */
+  setPaused(paused: boolean): void
   destroy(): void
 }
 
@@ -44,6 +47,7 @@ export function createPuzzleGame(opts: PuzzleGameOptions): PuzzleGame {
   let placedCount = 0
   let frame = 0
   let needsLayout = true
+  let paused = false
   let destroyed = false
 
   const invalidate = () => {
@@ -92,13 +96,14 @@ export function createPuzzleGame(opts: PuzzleGameOptions): PuzzleGame {
     placedCount++
   }
 
-  const detach = attachPointerController(canvas, {
-    enabled: () => layout !== null,
+  const controller = attachPointerController(canvas, {
+    enabled: () => layout !== null && !paused,
     pick: (point) => (layout ? pickPiece(order, paths, point, layout, probe) : null),
     toBoard: (point) => worldToBoard(point, layout!),
     grab: (piece) => {
       moveToIndex(piece, -1)
       invalidate()
+      opts.onPickup?.()
     },
     move: (piece, to) => {
       piece.u = to.u
@@ -124,10 +129,16 @@ export function createPuzzleGame(opts: PuzzleGameOptions): PuzzleGame {
   observer.observe(canvas)
 
   return {
+    setPaused(value) {
+      paused = value
+      // A drag interrupted by pause still counts, or pausing mid-drag would dodge the move counter.
+      if (paused && controller.cancel() > MOVE_THRESHOLD_PX) opts.onMove?.()
+    },
     destroy() {
       destroyed = true
       observer.disconnect()
-      detach()
+      controller.cancel()
+      controller.detach()
       cancelAnimationFrame(frame)
       frame = 0
     },

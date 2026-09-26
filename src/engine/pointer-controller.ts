@@ -19,8 +19,14 @@ interface DragState {
   offset: BoardPoint
 }
 
-/** Wires Pointer Events on the canvas to drag handlers. Returns a detach function. */
-export function attachPointerController(canvas: HTMLCanvasElement, h: DragHandlers): () => void {
+export interface PointerController {
+  detach(): void
+  /** Ends the current drag in place without a drop (no snap). Returns the distance dragged, 0 if idle. */
+  cancel(): number
+}
+
+/** Wires Pointer Events on the canvas to drag handlers. */
+export function attachPointerController(canvas: HTMLCanvasElement, h: DragHandlers): PointerController {
   let drag: DragState | null = null
 
   const toPoint = (e: PointerEvent): Point => {
@@ -66,7 +72,16 @@ export function attachPointerController(canvas: HTMLCanvasElement, h: DragHandle
     ['contextmenu', onContextMenu],
   ] as const
   for (const [type, fn] of events) canvas.addEventListener(type, fn as EventListener)
-  return () => {
-    for (const [type, fn] of events) canvas.removeEventListener(type, fn as EventListener)
+  return {
+    detach() {
+      for (const [type, fn] of events) canvas.removeEventListener(type, fn as EventListener)
+    },
+    cancel() {
+      if (!drag) return 0
+      const { pointerId, start, last } = drag
+      drag = null
+      if (canvas.hasPointerCapture(pointerId)) canvas.releasePointerCapture(pointerId)
+      return distance(start, last)
+    },
   }
 }
