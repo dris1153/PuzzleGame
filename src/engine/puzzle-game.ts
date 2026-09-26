@@ -1,6 +1,6 @@
-import { createAnimations, HINT_MS, hintAlpha, isAnimating, rotationAngle, setHintPaused } from './board-animations'
-import { computeBoardLayout } from './board-layout'
-import { renderBoard } from './board-renderer'
+import { createAnimations, HINT_MS, hintAlpha, isAnimating, popScale, rotationAngle, setHintPaused } from './board-animations'
+import { boardFit, computeBoardLayout, type BoardFit } from './board-layout'
+import { buildBackdrop, renderBoard } from './board-renderer'
 import { canSnap, correctCenter, worldToBoard } from './geometry'
 import { pickHintPiece } from './hint-picker'
 import { pickPiece } from './hit-test'
@@ -10,33 +10,10 @@ import { buildSprite, type Sprite } from './piece-sprite-cache'
 import { attachPointerController } from './pointer-controller'
 import { DRAG_THRESHOLD_PX } from './pointer-gesture'
 import { clampPiecesToView, scatterPieces } from './scatter-pieces'
-import type { BoardLayout, Grid, Piece, Rng, Rotation } from './types'
+import type { PuzzleGame, PuzzleGameOptions } from './puzzle-game-api'
+import type { BoardLayout, Grid, Piece, Rotation } from './types'
 
-export interface PuzzleGameOptions {
-  canvas: HTMLCanvasElement
-  image: HTMLImageElement
-  rows: number
-  cols: number
-  /** Pieces start turned by random quarter turns; a tap turns a piece 90°. */
-  rotation?: boolean
-  ghost?: boolean
-  rng?: Rng
-  onPickup?(): void
-  /** A drop after dragging more than a few pixels. */
-  onMove?(snapped: boolean): void
-  onRotate?(): void
-  onPiecePlaced?(placed: number, total: number): void
-  onComplete?(): void
-}
-
-export interface PuzzleGame {
-  /** Paused games ignore input; a drag in progress stays where it is (counted as a move, never snapped). */
-  setPaused(paused: boolean): void
-  setGhostVisible(visible: boolean): void
-  /** Highlights a random unplaced piece and its slot; false when none is left. */
-  showHint(): boolean
-  destroy(): void
-}
+export type { PuzzleGame, PuzzleGameOptions } from './puzzle-game-api'
 
 export function createPuzzleGame(opts: PuzzleGameOptions): PuzzleGame {
   const { canvas, image, rng = Math.random, rotation = false } = opts
@@ -48,6 +25,8 @@ export function createPuzzleGame(opts: PuzzleGameOptions): PuzzleGame {
   const pieces = createPieces(grid, rng)
   const order: Piece[] = [...pieces]
   let layout: BoardLayout | null = null
+  let placement: BoardFit['placement'] | null = null
+  let backdrop: HTMLCanvasElement | null = null
   let paths: Path2D[] = []
   let sprites: Sprite[] = []
   let viewW = 0
@@ -59,6 +38,7 @@ export function createPuzzleGame(opts: PuzzleGameOptions): PuzzleGame {
   let ghost = opts.ghost ?? true
   let paused = false
   let destroyed = false
+  let lifted: Piece | null = null
 
   const invalidate = () => {
     if (!frame && !destroyed) frame = requestAnimationFrame(draw)
@@ -67,21 +47,14 @@ export function createPuzzleGame(opts: PuzzleGameOptions): PuzzleGame {
   function draw() {
     frame = 0
     if (needsLayout) relayout()
-    if (!layout) return
+    if (!layout || !backdrop) return
     const now = performance.now()
     const alpha = hintAlpha(anims, now)
     const hinted = anims.hint && pieces[anims.hint.pieceId]
     renderBoard(ctx, {
-      viewW,
-      viewH,
-      layout,
-      grid,
-      image,
-      ghost,
-      order,
-      sprites,
-      paths,
+      dpr, viewW, viewH, layout, grid, backdrop, order, sprites, paths, lifted,
       angleOf: (p) => rotationAngle(p, anims, now),
+      scaleOf: (p) => popScale(p, anims, now),
       hint: alpha !== null && hinted ? { piece: hinted, alpha } : null,
     })
     if (isAnimating(anims)) invalidate()
@@ -103,12 +76,16 @@ export function createPuzzleGame(opts: PuzzleGameOptions): PuzzleGame {
     canvas.height = Math.round(viewH * dpr)
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
-    const next = computeBoardLayout(viewW, viewH, image.naturalWidth, image.naturalHeight, grid)
+    const fit = boardFit(viewW, viewH)
+    const next = computeBoardLayout(viewW, viewH, image.naturalWidth, image.naturalHeight, grid, fit)
     layout = next
+    backdrop = buildBackdrop(next, image, ghost, viewW, viewH, dpr)
     paths = pieces.map((p) => buildPiecePath(p.edges, next))
     sprites = pieces.map((p) => buildSprite(p, paths[p.id], image, next, dpr))
-    if (firstLayout) scatterPieces(pieces, next, viewW, viewH, rng, rotation)
+    // Turning the phone moves the board (top ↔ center): loose pieces are re-spread around it, keeping their turns.
+    if (firstLayout || fit.placement !== placement) scatterPieces(pieces, next, viewW, viewH, rng, rotation, firstLayout && rotation)
     else clampPiecesToView(pieces, next, viewW, viewH, rotation)
+    placement = fit.placement
   }
 
   const moveToIndex = (piece: Piece, index: 0 | -1) => {
@@ -119,10 +96,12 @@ export function createPuzzleGame(opts: PuzzleGameOptions): PuzzleGame {
 
   /** Snaps if possible, then reports. Callbacks go last: a consumer may destroy the game from inside them. */
   function release(piece: Piece, movedPx: number) {
+    lifted = null
     const snapped = layout !== null && canSnap(piece, layout, grid)
     if (snapped) {
       Object.assign(piece, correctCenter(piece, grid), { placed: true })
       moveToIndex(piece, 0)
+      if (!opts.reducedMotion) anims.popping.set(piece.id, performance.now())
       placedCount++
     }
     invalidate()
@@ -133,7 +112,7 @@ export function createPuzzleGame(opts: PuzzleGameOptions): PuzzleGame {
   }
 
   function rotate(piece: Piece) {
-    anims.rotating.set(piece.id, { from: (piece.rotation * Math.PI) / 2, start: performance.now() })
+    if (!opts.reducedMotion) anims.rotating.set(piece.id, { from: (piece.rotation * Math.PI) / 2, start: performance.now() })
     piece.rotation = ((piece.rotation + 1) % 4) as Rotation
     release(piece, 0)
     if (!destroyed) opts.onRotate?.()
@@ -144,6 +123,7 @@ export function createPuzzleGame(opts: PuzzleGameOptions): PuzzleGame {
     pick: (point) => (layout ? pickPiece(order, paths, point, layout, probe) : null),
     toBoard: (point) => worldToBoard(point, layout!),
     grab: (piece) => {
+      lifted = piece
       moveToIndex(piece, -1)
       invalidate()
       opts.onPickup?.()
@@ -171,9 +151,11 @@ export function createPuzzleGame(opts: PuzzleGameOptions): PuzzleGame {
       invalidate()
       // A drag interrupted by pause still counts, or pausing mid-drag would dodge the move counter.
       if (paused && controller.cancel() > DRAG_THRESHOLD_PX) opts.onMove?.(false)
+      if (paused) lifted = null
     },
     setGhostVisible(visible) {
       ghost = visible
+      if (layout) backdrop = buildBackdrop(layout, image, ghost, viewW, viewH, dpr)
       invalidate()
     },
     showHint() {

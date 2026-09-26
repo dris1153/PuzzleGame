@@ -9,6 +9,7 @@ function fakeCanvas() {
   const listeners = new Map<string, Listener>()
   const captured = new Set<number>()
   const canvas = {
+    style: { cursor: '' },
     addEventListener: (type: string, fn: Listener) => listeners.set(type, fn),
     removeEventListener: (type: string) => listeners.delete(type),
     getBoundingClientRect: () => ({ left: 0, top: 0 }),

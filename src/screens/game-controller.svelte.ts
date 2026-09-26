@@ -3,6 +3,7 @@ import type { GameConfig } from '../data/game-config'
 import { GameSession, type SessionResult, type SessionStatus } from '../engine/game-session'
 import { createPuzzleGame, type PuzzleGame } from '../engine/puzzle-game'
 import { computeStars, type Stars } from '../engine/scoring'
+import { prefersReducedMotion } from '../lib/motion'
 import { progress } from '../stores/progress-store.svelte'
 import { settings } from '../stores/settings-store.svelte'
 
@@ -55,6 +56,7 @@ export class GameController {
       cols: this.config.cols,
       rotation: this.config.rotation,
       ghost: this.ghost,
+      reducedMotion: prefersReducedMotion(),
       onPickup: () => {
         playSfx('pickup')
         this.beginIfReady()

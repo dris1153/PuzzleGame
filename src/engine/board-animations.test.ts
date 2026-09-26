@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createAnimations, HINT_MS, hintAlpha, isAnimating, ROTATE_MS, rotationAngle, setHintPaused } from './board-animations'
+import { createAnimations, HINT_MS, hintAlpha, isAnimating, POP_MS, popScale, ROTATE_MS, rotationAngle, setHintPaused } from './board-animations'
 import { createPieces } from './piece-generator'
 
 const QUARTER = Math.PI / 2
@@ -74,5 +74,17 @@ describe('setHintPaused', () => {
     setHintPaused(anims, false, 60_000)
     expect(hintAlpha(anims, 60_499)).not.toBeNull()
     expect(hintAlpha(anims, 60_500)).toBeNull()
+  })
+})
+
+describe('popScale', () => {
+  it('swells and settles back to 1, then stops animating', () => {
+    const anims = createAnimations()
+    const piece = createPieces({ rows: 1, cols: 1 })[0]
+    anims.popping.set(piece.id, 0)
+    expect(popScale(piece, anims, POP_MS / 2)).toBeCloseTo(1.12)
+    expect(isAnimating(anims)).toBe(true)
+    expect(popScale(piece, anims, POP_MS)).toBe(1)
+    expect(isAnimating(anims)).toBe(false)
   })
 })

@@ -1,7 +1,7 @@
 ---
 title: "Vite + Svelte jigsaw game rewrite"
 description: "Port vanilla canvas jigsaw to Vite + Svelte 5 + TS with levels, metrics, i18n and playful UI."
-status: in-progress
+status: completed
 priority: P2
 effort: 30h
 branch: feat/vite-svelte-jigsaw
@@ -26,7 +26,7 @@ Source of decisions: [brainstorm report](../reports/brainstorm-260926-2355-vite-
 | 2 | [Game session, HUD and metrics](./phase-02-game-session-hud-and-metrics.md) | Completed | 5h |
 | 3 | [Screens, i18n and level content](./phase-03-screens-i18n-and-level-content.md) | Completed | 7h |
 | 4 | [Hint, ghost, rotation and sound](./phase-04-hint-ghost-rotation-and-sound.md) | Completed | 6h |
-| 5 | [Playful styling, responsive and polish](./phase-05-playful-styling-responsive-and-polish.md) | Pending | 6h |
+| 5 | [Playful styling, responsive and polish](./phase-05-playful-styling-responsive-and-polish.md) | Completed | 6h |
 
 Phases are sequential; each one ends with a playable build.
 

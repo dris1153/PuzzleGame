@@ -100,6 +100,14 @@
     position: relative;
     flex: 1;
     min-height: 0;
+    margin: 0 max(var(--space-2), env(safe-area-inset-right)) max(var(--space-2), env(safe-area-inset-bottom))
+      max(var(--space-2), env(safe-area-inset-left));
+    background-color: var(--felt);
+    background-image: radial-gradient(rgb(43 33 64 / 0.08) 1.5px, transparent 1.5px);
+    background-size: 22px 22px;
+    border: var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
   }
 
   canvas {
@@ -113,5 +121,8 @@
     position: absolute;
     inset: 50% auto auto 50%;
     transform: translate(-50%, -50%);
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 800;
   }
 </style>

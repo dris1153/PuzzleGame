@@ -2,7 +2,11 @@
   import { onMount } from 'svelte'
   import type { Stars } from '../engine/scoring'
   import { t } from '../i18n/i18n.svelte'
+  import { celebrate } from '../lib/celebrate'
   import { formatTime } from '../lib/format-time'
+  import AppButton from './ui/app-button.svelte'
+  import AppModal from './ui/app-modal.svelte'
+  import StarRating from './ui/star-rating.svelte'
 
   interface Props {
     timeMs: number
@@ -16,62 +20,49 @@
   }
 
   let { timeMs, moves, stars, isNewBest, onReplay, onMenu, onNext }: Props = $props()
-  let primaryButton = $state<HTMLButtonElement>()
 
-  onMount(() => primaryButton?.focus())
+  onMount(() => void celebrate())
 </script>
 
-<div class="backdrop">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="win-title">
-    <h2 id="win-title">{t('win.title')}</h2>
-    <p class="stars" role="img" aria-label={t('win.stars', { count: stars })}>
-      {'★'.repeat(stars)}{'☆'.repeat(3 - stars)}
-    </p>
-    <p>{t('win.summary', { time: formatTime(timeMs), moves })}</p>
-    {#if isNewBest}<p class="best">{t('win.newBest')}</p>{/if}
-    <div class="actions">
-      {#if onNext}
-        <button type="button" bind:this={primaryButton} onclick={onNext}>{t('win.next')}</button>
-        <button type="button" onclick={onReplay}>{t('win.replay')}</button>
-      {:else}
-        <button type="button" bind:this={primaryButton} onclick={onReplay}>{t('win.replay')}</button>
-      {/if}
-      <button type="button" onclick={onMenu}>{t('win.menu')}</button>
-    </div>
+<AppModal labelledBy="win-title">
+  <StarRating {stars} size="lg" animate />
+  <h2 id="win-title">{t('win.title')}</h2>
+  <p class="summary">{t('win.summary', { time: formatTime(timeMs), moves })}</p>
+  {#if isNewBest}<p class="best">{t('win.newBest')}</p>{/if}
+  <div class="actions">
+    {#if onNext}
+      <AppButton color="sunny" size="lg" icon="next" onclick={onNext}>{t('win.next')}</AppButton>
+    {/if}
+    <AppButton color={onNext ? 'paper' : 'sunny'} size={onNext ? 'md' : 'lg'} icon="restart" onclick={onReplay}>
+      {t('win.replay')}
+    </AppButton>
+    <AppButton icon="home" onclick={onMenu}>{t('win.menu')}</AppButton>
   </div>
-</div>
+</AppModal>
 
 <style>
-  .backdrop {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    background: rgb(0 0 0 / 0.35);
+  h2 {
+    font-size: 2.2rem;
   }
 
-  .modal {
-    display: grid;
-    gap: 0.75rem;
-    padding: 1.5rem 2rem;
-    text-align: center;
-    background: #fff;
-    border-radius: 1rem;
-  }
-
-  .stars {
-    font-size: 2rem;
-    color: #f5a623;
+  .summary {
+    font-size: 1.1rem;
+    font-variant-numeric: tabular-nums;
   }
 
   .best {
-    font-weight: 700;
+    padding: var(--space-1) var(--space-4);
+    font-family: var(--font-display);
+    font-weight: 800;
+    background: var(--mint);
+    border: var(--border);
+    border-radius: var(--radius-pill);
+    transform: rotate(-3deg);
   }
 
   .actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.5rem;
+    display: grid;
+    gap: var(--space-3);
+    width: 100%;
   }
 </style>

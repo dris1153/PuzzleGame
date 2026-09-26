@@ -1,6 +1,8 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
   import { t } from '../i18n/i18n.svelte'
+  import AppButton from './ui/app-button.svelte'
+  import AppIcon from './ui/app-icon.svelte'
+  import AppModal from './ui/app-modal.svelte'
 
   interface Props {
     onResume: () => void
@@ -9,41 +11,37 @@
   }
 
   let { onResume, onRestart, onQuit }: Props = $props()
-  let resumeButton: HTMLButtonElement
-
-  // The Pause button that opened this is now disabled, so focus would otherwise fall to <body>.
-  onMount(() => resumeButton.focus())
-
-  function onKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') onResume()
-  }
 </script>
 
-<svelte:window onkeydown={onKeydown} />
-
 <!-- Opaque on purpose: the board must not be studied while the clock is stopped. -->
-<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+<AppModal labelledBy="pause-title" opaque onEscape={onResume}>
+  <span class="icon"><AppIcon name="pause" size={36} /></span>
   <h2 id="pause-title">{t('pause.title')}</h2>
   <div class="actions">
-    <button type="button" bind:this={resumeButton} onclick={onResume}>{t('pause.resume')}</button>
-    <button type="button" onclick={onRestart}>{t('pause.restart')}</button>
-    <button type="button" onclick={onQuit}>{t('pause.quit')}</button>
+    <AppButton color="sunny" size="lg" icon="play" data-autofocus onclick={onResume}>{t('pause.resume')}</AppButton>
+    <AppButton icon="restart" onclick={onRestart}>{t('pause.restart')}</AppButton>
+    <AppButton icon="home" onclick={onQuit}>{t('pause.quit')}</AppButton>
   </div>
-</div>
+</AppModal>
 
 <style>
-  .overlay {
-    position: absolute;
-    inset: 0;
+  .icon {
     display: grid;
-    place-content: center;
-    gap: 1rem;
-    text-align: center;
-    background: #f4efe6;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    background: var(--sky);
+    border: var(--border);
+    border-radius: 50%;
+  }
+
+  h2 {
+    font-size: 2.2rem;
   }
 
   .actions {
-    display: flex;
-    gap: 0.75rem;
+    display: grid;
+    gap: var(--space-3);
+    width: 100%;
   }
 </style>

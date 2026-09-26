@@ -3,7 +3,7 @@ import { computeBoardLayout } from './board-layout'
 import { boardToWorld } from './geometry'
 import { createPieces } from './piece-generator'
 import { clampPiecesToView, scatterPieces } from './scatter-pieces'
-import type { BoardLayout, Piece } from './types'
+import type { BoardLayout, Piece, Rotation } from './types'
 
 const grid = { rows: 4, cols: 4 }
 const viewW = 900
@@ -109,5 +109,30 @@ describe('scatterPieces with rotation', () => {
         expect(Math.min(c.x, c.y, viewW - c.x, viewH - c.y)).toBeGreaterThanOrEqual(m - 1e-9)
       }
     }
+  })
+
+  it('falls back to everywhere zone when rotation margins exceed zone bounds', () => {
+    const tinyView = { rows: 2, cols: 2 }
+    const tinyLayout = computeBoardLayout(300, 300, 1500, 1000, tinyView)
+    const pieces = createPieces(tinyView)
+    scatterPieces(pieces, tinyLayout, 300, 300, () => 0.5, true)
+    const rotMargin = Math.max(tinyLayout.pieceW, tinyLayout.pieceH) / 2 + tinyLayout.tab
+    for (const p of pieces) {
+      const c = boardToWorld(p, tinyLayout)
+      expect(c.x).toBeGreaterThanOrEqual(rotMargin - 1e-9)
+      expect(c.x).toBeLessThanOrEqual(300 - rotMargin + 1e-9)
+      expect(c.y).toBeGreaterThanOrEqual(rotMargin - 1e-9)
+      expect(c.y).toBeLessThanOrEqual(300 - rotMargin + 1e-9)
+    }
+  })
+})
+
+describe('re-scatter after an orientation change', () => {
+  it('moves pieces but keeps their quarter turns when turnPieces is false', () => {
+    const pieces = createPieces(grid)
+    pieces.forEach((p, i) => (p.rotation = (i % 4) as Rotation))
+    scatterPieces(pieces, layout, viewW, viewH, () => 0.9, true, false)
+    expect(pieces.map((p) => p.rotation)).toEqual(pieces.map((_, i) => i % 4))
+    expectInsideView(pieces, layout)
   })
 })

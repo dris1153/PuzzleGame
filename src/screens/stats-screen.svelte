@@ -1,10 +1,13 @@
 <script lang="ts">
+  import PageShell from '../components/page-shell.svelte'
   import ScreenHeader from '../components/screen-header.svelte'
   import { LEVELS } from '../data/levels'
   import { t } from '../i18n/i18n.svelte'
   import { formatTime } from '../lib/format-time'
   import { progress } from '../stores/progress-store.svelte'
   import { screen } from '../stores/screen-store.svelte'
+
+  const COLORS = ['sunny', 'mint', 'coral', 'sky', 'grape']
 
   const stats = $derived(progress.current.stats)
   const records = $derived(LEVELS.map((l) => progress.current.levels[l.id]).filter((r) => r !== undefined))
@@ -21,26 +24,54 @@
   ])
 </script>
 
-<ScreenHeader title={t('stats.title')} onBack={() => screen.go({ name: 'home' })} />
-<main>
-  <dl class="stats">
-    {#each rows as [label, value] (label)}
-      <div><dt>{label}</dt><dd>{value}</dd></div>
-    {/each}
-  </dl>
-</main>
+<PageShell>
+  <ScreenHeader title={t('stats.title')} onBack={() => screen.go({ name: 'home' })} />
+  <main>
+    <dl class="stats">
+      {#each rows as [label, value], i (label)}
+        <div class="tile" style:--fill="var(--{COLORS[i % COLORS.length]})">
+          <dt>{label}</dt>
+          <dd>{value}</dd>
+        </div>
+      {/each}
+    </dl>
+  </main>
+</PageShell>
 
 <style>
   .stats {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
-    gap: 1rem;
-    padding: 0 1rem 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(13rem, 100%), 1fr));
+    gap: var(--space-4);
+  }
+
+  .tile {
+    display: grid;
+    gap: var(--space-1);
+    padding: var(--space-4);
+    background: var(--fill);
+    border: var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--lift);
+  }
+
+  .tile:nth-child(odd) {
+    rotate: -0.6deg;
+  }
+
+  .tile:nth-child(even) {
+    rotate: 0.6deg;
+  }
+
+  dt {
+    font-size: 0.95rem;
   }
 
   dd {
-    font-size: 1.5rem;
-    font-weight: 700;
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1.1;
     font-variant-numeric: tabular-nums;
   }
 </style>

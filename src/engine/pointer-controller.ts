@@ -45,6 +45,7 @@ export function attachPointerController(canvas: HTMLCanvasElement, h: DragHandle
     if (!piece) return
     e.preventDefault()
     canvas.setPointerCapture(e.pointerId)
+    canvas.style.cursor = 'grabbing'
     const b = h.toBoard(point)
     drag = {
       pointerId: e.pointerId,
@@ -58,6 +59,10 @@ export function attachPointerController(canvas: HTMLCanvasElement, h: DragHandle
   }
 
   const onMove = (e: PointerEvent) => {
+    if (!drag && e.pointerType === 'mouse') {
+      canvas.style.cursor = h.enabled() && h.pick(toPoint(e)) ? 'grab' : ''
+      return
+    }
     if (!drag || e.pointerId !== drag.pointerId) return
     drag.last = toPoint(e)
     const b = h.toBoard(drag.last)
@@ -69,6 +74,7 @@ export function attachPointerController(canvas: HTMLCanvasElement, h: DragHandle
     if (!drag || e.pointerId !== drag.pointerId) return
     const { piece, start, last, startTime } = drag
     drag = null
+    canvas.style.cursor = e.pointerType === 'mouse' ? 'grab' : ''
     const moved = distance(start, last)
     if (e.type === 'pointerup' && classifyRelease(moved, e.timeStamp - startTime) === 'tap') h.tap(piece)
     else h.drop(piece, moved)
@@ -93,6 +99,7 @@ export function attachPointerController(canvas: HTMLCanvasElement, h: DragHandle
       if (!drag) return 0
       const { pointerId, start, last } = drag
       drag = null
+      canvas.style.cursor = ''
       if (canvas.hasPointerCapture(pointerId)) canvas.releasePointerCapture(pointerId)
       return distance(start, last)
     },

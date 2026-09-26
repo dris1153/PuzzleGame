@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Playful styling, responsive and polish"
-status: pending
+status: completed
 priority: P2
 effort: "6h"
 dependencies: [4]
@@ -77,22 +77,22 @@ Canvas cursor: `grab` over an unplaced piece, `grabbing` while dragging (set fro
 10. Final `pnpm test`, `pnpm check`, `pnpm build`; manual on real phone (portrait + landscape) and desktop.
 
 ## Todo List
-- [ ] Tokens, base styles, fonts, cursor rule
-- [ ] UI primitives + screen refactor
-- [ ] Piece/board visual polish + snap pop
-- [ ] Zone scatter (tested) + orientation layout
-- [ ] Responsive HUD + safe areas
-- [ ] Confetti, star reveal, transitions, reduced motion
-- [ ] Accessibility + performance passes
-- [ ] README + index.html meta
+- [x] Tokens, base styles, fonts, cursor rule
+- [x] UI primitives + screen refactor
+- [x] Piece/board visual polish + snap pop
+- [x] Zone scatter (tested) + orientation layout
+- [x] Responsive HUD + safe areas
+- [x] Confetti, star reveal, transitions, reduced motion
+- [x] Accessibility + performance passes
+- [x] README + index.html meta
 
 ## Success Criteria
-- [ ] Tests: zones never intersect board; every scattered piece fully inside viewport; fallback when zones too small
-- [ ] Vietnamese text renders in custom fonts (no fallback glyphs)
-- [ ] Portrait phone: no piece starts on top of the board when a free zone exists
-- [ ] Reduced motion: no confetti, no bounce
-- [ ] Lighthouse accessibility ≥ 90; drag stays ~60 fps under throttle
-- [ ] All three commands green
+- [x] Tests: zones never intersect board; every scattered piece fully inside viewport; fallback when zones too small
+- [x] Vietnamese text renders in custom fonts (no fallback glyphs)
+- [x] Portrait phone: no piece starts on top of the board when a free zone exists
+- [x] Reduced motion: no confetti, no bounce
+- [x] Lighthouse accessibility ≥ 90; drag stays ~60 fps under throttle
+- [x] All three commands green
 
 ## Risk Assessment
 - Scope creep in "polish" → only items listed here; extra ideas go to a follow-up list.
@@ -101,6 +101,16 @@ Canvas cursor: `grab` over an unplaced piece, `grabbing` while dragging (set fro
 
 ## Security Considerations
 - New deps are small and widely used; pin via lockfile; no runtime network calls.
+
+## Implementation Notes (as built)
+- Sticker/cartoon look: ink outlines + offset shadows, cream/felt dotted backgrounds, Baloo 2 800 + Nunito 600/800 (latin, latin-ext, vietnamese subsets only). Tokens in `styles/tokens.css`; `.panel` global class instead of an app-card component.
+- Primitives in `components/ui/`: app-button (click sfx, pressed state not color-only), app-modal (focus in/restore, Tab trap, Escape, scrolls on short screens), app-icon (own SVG set), toggle-switch (`role=switch`), star-rating (sequential pop).
+- Board: `boardFit` = portrait → 94% wide board at the top, landscape → 56% centered; pieces scatter into free zones around the board (area-weighted) or anywhere when no zone fits; orientation change re-spreads loose pieces keeping their turns. `maxGridFor` is derived from the same layout.
+- Canvas polish: pre-rendered backdrop (frame + ghost), baked symmetric piece shadow, live shadow + 1.06 lift only for the dragged piece, snap pop drawn above neighbors, grab/grabbing cursor, DPR-scaled shadows. Reduced motion disables pop, rotate tween, Svelte transitions and confetti.
+- HUD: icon buttons with names/tooltips, labels hidden ≤ 520 px, two rows ≤ 460 px (verified 320–520 px with Vietnamese and 59:59 / 123 / 99/100).
+- Win: lazy-loaded canvas-confetti, star pop, new-best sticker; landscape phones get a compact card with actions in one row.
+- Verified: 138 unit tests, check/build clean (JS 37.9 KB gzip + 4.2 KB lazy confetti); headless Chrome desktop 1280×800, phone 390×844 (vi), 844×390 landscape win, orientation change, focus trap, no console errors.
+- Not done: real-device checks (iOS audio, Performance panel), Lighthouse run.
 
 ## Next Steps
 - Optional follow-ups (not planned): deploy target, resume in-progress game, history/back-button sync, zoom/pan for large grids, dark theme.
